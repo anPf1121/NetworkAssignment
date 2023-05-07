@@ -1,0 +1,15 @@
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Client.exe
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Client.deps.json
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Client.runtimeconfig.json
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Client.dll
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Client.pdb
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.csproj.AssemblyReference.cache
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.AssemblyInfoInputs.cache
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.AssemblyInfo.cs
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.csproj.CoreCompileInputs.cache
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.dll
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\refint\Client.dll
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.pdb
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.genruntimeconfig.cache
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\ref\Client.dll
