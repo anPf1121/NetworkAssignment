@@ -13,3 +13,14 @@ C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\refint\Client.dll
 C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.pdb
 C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.genruntimeconfig.cache
 C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\ref\Client.dll
+C:\Users\anngu\Desktop\ChatRoom\test\Client\obj\Debug\net7.0\Client.csproj.CopyComplete
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\ChatRoom.deps.json
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\ChatRoom.runtimeconfig.json
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\ChatRoom.exe
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\ChatRoom.dll
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\ChatRoom.pdb
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Server.deps.json
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Server.runtimeconfig.json
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Server.exe
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Server.dll
+C:\Users\anngu\Desktop\ChatRoom\test\Client\bin\Debug\net7.0\Server.pdb

@@ -1,100 +1,98 @@
-﻿using System.Net.Sockets;
+﻿using System;
+using System.IO;
+using System.Net.Sockets;
 using System.Text;
-using System.Net.Security;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Authentication;
+using System.Threading;
+using System.Security.Cryptography;
 
 namespace ChatRoomClient
 {
-    class ChatRoomClient
+    class Program
     {
-        private TcpClient client;
-        private SslStream sslStream;
-        private X509Certificate2 certificate;
-        private Thread readThread;
-
-        public ChatRoomClient(string serverAddress, int port)
+        static byte[] key = default!;
+        static byte[] iv = default!;
+        static void Main(string[] args)
         {
-            client = new TcpClient();
-            client.Connect(serverAddress, port);
-            certificate = new X509Certificate2("../Server/server.pfx", "password");
-            sslStream = new SslStream(client.GetStream(), false, ValidateServerCertificate);
-            sslStream.AuthenticateAsClient("server", null, SslProtocols.Tls, false);
-            readThread = new Thread(new ThreadStart(ReadMessages));
-            readThread.Start();
-        }
+            Console.WriteLine("Connecting to server...");
+            TcpClient client = new TcpClient("localhost", 8888);
+            Console.WriteLine("Connected to server!");
 
-        private bool ValidateServerCertificate(object? sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
-        }
+            NetworkStream stream = client.GetStream();
 
-        private void ReadMessages()
-        {
+            // Receive the shared key and IV from the server
+            key = new byte[32];
+            stream.Read(key, 0, key.Length);
+
+            iv = new byte[16];
+            stream.Read(iv, 0, iv.Length);
+
+            Console.WriteLine("Secret key: " + Convert.ToBase64String(key));
+            Console.WriteLine("Secret IV: " + Convert.ToBase64String(iv));
+
+            // Start a new thread to read messages from the server
+            Thread t = new Thread(new ParameterizedThreadStart(ReadMessages));
+            t.Start(stream);
+
             while (true)
             {
-                byte[] buffer = new byte[2048];
-                int bytesRead = 0;
-                try
-                {
-                    bytesRead = sslStream.Read(buffer, 0, buffer.Length);
-                }
-                catch (Exception ex)
-                {
-                    string e = ex.Message;
-                    break;
-                }
+                Console.Write("> ");
+                // Read input from the user
+                string message = Console.ReadLine();
+                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+                byte[] encrypted = messageBytes;
 
-                if (bytesRead == 0)
-                {
-                    Console.WriteLine("Disconnected from server.");
-                    break;
-                }
-
-                string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                Console.WriteLine("Received message: {0}", message);
+                // Send the message to the server
+                stream.Write(encrypted, 0, encrypted.Length);
             }
         }
 
-        public void SendMessage(string message)
+        static void ReadMessages(object obj)
         {
-            byte[] buffer = Encoding.UTF8.GetBytes(message);
-            sslStream.Write(buffer, 0, buffer.Length);
-            sslStream.Flush();
-        }
+            NetworkStream stream = (NetworkStream)obj;
+            byte[] buffer = new byte[1024];
 
-        public void Close()
-        {
-            sslStream.Close();
-            client.Close();
-        }
-    }
-
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            Console.Write("Enter the IP address of the server: ");
-            string? ipAddress = Console.ReadLine();
-
-            Console.Write("Enter the port number of the server: ");
-            int port;
-            int.TryParse(Console.ReadLine(), out port);
-            if (ipAddress != null)
+            while (true)
             {
-                ChatRoomClient client = new ChatRoomClient(ipAddress, port);
-                while (true)
+                try
                 {
                     Console.Write("> ");
-                    string message = Console.ReadLine();
-                    if (message == "exit")
-                    {
-                        break;
-                    }
-                    client.SendMessage(message);
-                }
+                    // Read the incoming message from the server
+                    int bytesRead = stream.Read(buffer, 0, buffer.Length);
+                    byte[] decrypted = buffer;
+                    string message = Encoding.UTF8.GetString(decrypted);
 
-                client.Close();
+                    Console.WriteLine("Message received: " + message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Server disconnected: " + ex.Message);
+                    break;
+                }
+            }
+        }
+        static public byte[] AesEncrypt(byte[] message)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+                aes.Padding = PaddingMode.PKCS7;
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+                byte[] encryptedMessage = encryptor.TransformFinalBlock(message, 0, message.Length);
+                return encryptedMessage;
+            }
+        }
+
+        static public byte[] AesDecrypt(byte[] encryptedMessage)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+                aes.Padding = PaddingMode.PKCS7;
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                byte[] decryptedMessage = decryptor.TransformFinalBlock(encryptedMessage, 0, encryptedMessage.Length);
+                return decryptedMessage;
             }
         }
     }

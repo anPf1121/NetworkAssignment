@@ -13,3 +13,9 @@ C:\Users\anngu\Desktop\ChatRoom\test\Server\obj\Debug\net7.0\refint\Server.dll
 C:\Users\anngu\Desktop\ChatRoom\test\Server\obj\Debug\net7.0\Server.pdb
 C:\Users\anngu\Desktop\ChatRoom\test\Server\obj\Debug\net7.0\Server.genruntimeconfig.cache
 C:\Users\anngu\Desktop\ChatRoom\test\Server\obj\Debug\net7.0\ref\Server.dll
+C:\Users\anngu\Desktop\ChatRoom\test\Server\bin\Debug\net7.0\ChatRoom.deps.json
+C:\Users\anngu\Desktop\ChatRoom\test\Server\bin\Debug\net7.0\ChatRoom.runtimeconfig.json
+C:\Users\anngu\Desktop\ChatRoom\test\Server\bin\Debug\net7.0\ChatRoom.exe
+C:\Users\anngu\Desktop\ChatRoom\test\Server\bin\Debug\net7.0\ChatRoom.dll
+C:\Users\anngu\Desktop\ChatRoom\test\Server\bin\Debug\net7.0\ChatRoom.pdb
+C:\Users\anngu\Desktop\ChatRoom\test\Server\obj\Debug\net7.0\Server.csproj.CopyComplete

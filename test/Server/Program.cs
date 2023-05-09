@@ -1,121 +1,121 @@
-﻿using System.Net;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net;
 using System.Net.Sockets;
-using System.Net.Security;
+using System.Text;
+using System.Threading;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-using System.Security.Authentication;
+
 
 namespace ChatRoomServer
 {
     class Program
     {
-        static bool isRunning = false;
-        static TcpListener tcpListener = default!;
+        static TcpListener server;
         static List<TcpClient> clients = new List<TcpClient>();
+        static AesManaged aes = new AesManaged();
+        static readonly byte[] key = aes.Key; // Khóa bí mật
+        static readonly byte[] iv = aes.IV; // Vector khởi tạo
+
 
         static void Main(string[] args)
         {
-            RSA rsa = RSA.Create(2048);
-            CertificateRequest req = new CertificateRequest("CN=server", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-            X509Certificate2 cert = req.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddDays(365));
+            Console.WriteLine("Starting server...");
+            server = new TcpListener(IPAddress.Any, 8888);
+            server.Start();
 
-            Console.Title = "Chat Room Server";
+            Console.WriteLine("Secret key: " + Convert.ToBase64String(key));
+            Console.WriteLine("Secret IV: " + Convert.ToBase64String(iv));
 
-            Console.Write("Enter the IP address of the server: ");
-            string? ip = Console.ReadLine();
-            if (ip != null)
+
+            while (true)
             {
-                IPAddress ipAddress = IPAddress.Parse(ip);
+                Console.WriteLine("Waiting for client...");
+                TcpClient client = server.AcceptTcpClient();
+                Console.WriteLine("Client connected!");
 
-                Console.Write("Enter the port number of the server: ");
-                int port;
-                int.TryParse(Console.ReadLine(), out port);
-
-                tcpListener = new TcpListener(ipAddress, port);
-
-                Console.WriteLine($"Server started on {ipAddress}:{port}");
-
-                byte[] certData = cert.Export(X509ContentType.Pfx, "password");
-                File.WriteAllBytes("server.pfx", certData);
-
-                X509Certificate2 serverCertificate = new X509Certificate2("server.pfx", "password");
-                StartServer(serverCertificate);
-
-                Console.ReadLine();
-            }
-        }
-        static private bool ValidateClientCertificate(object? sender, X509Certificate? certificate, X509Chain? chain, SslPolicyErrors sslPolicyErrors)
-        {
-            return true;
-        }
-
-        static void StartServer(X509Certificate2 serverCertificate)
-        {
-            isRunning = true;
-            tcpListener.Start();
-            // Create a new thread to handle client communication
-            while (isRunning)
-            {
-                TcpClient client = tcpListener.AcceptTcpClient();
-                Thread clientThread = new Thread(() => HandleClientCommunication(client, serverCertificate));
-                clientThread.Start();
+                // Add the client to the list
                 clients.Add(client);
-                Console.WriteLine($"Client {client.Client.RemoteEndPoint} connected");
+
+                // Start a new thread to handle the client
+                Thread t = new Thread(new ParameterizedThreadStart(HandleClient));
+                t.Start(client);
             }
         }
-        static void HandleClientCommunication(TcpClient client, X509Certificate2 serverCertificate)
-        {
-            SslStream sslStream = new SslStream(client.GetStream(), false, new RemoteCertificateValidationCallback(ValidateClientCertificate));
 
-            try
+        static void HandleClient(object obj)
+        {
+            TcpClient client = (TcpClient)obj;
+            NetworkStream stream = client.GetStream();
+            // Send the shared key and IV to the client
+            stream.Write(key, 0, key.Length);
+            stream.Write(iv, 0, iv.Length);
+            while (true)
             {
-                sslStream.AuthenticateAsServer(serverCertificate, true, SslProtocols.Tls, false);
-                while (true)
+                try
                 {
-                    byte[] buffer = new byte[2048];
-                    int bytesRead = sslStream.Read(buffer, 0, buffer.Length);
-                    string message = System.Text.Encoding.UTF8.GetString(buffer, 0, bytesRead);
-                    BroadcastMessage(client, message);
+                    // Đọc tin nhắn đã nhận từ client
+                    byte[] buffer = new byte[1024];
+                    int bytesRead = stream.Read(buffer, 0, buffer.Length);
+
+                    // Giải mã tin nhắn
+                    byte[] decryptedBytes = buffer;
+                    string message = Encoding.UTF8.GetString(decryptedBytes, 0, decryptedBytes.Length);
+
+                    // Phát tin nhắn đến tất cả client khác
+                    BroadcastMessage(message);
+
+                    Console.WriteLine("Message received: " + message);
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-            }
-            finally
-            {
-                lock (clients)
+                catch (Exception ex)
                 {
+                    Console.WriteLine("Client disconnected: " + ex.Message);
                     clients.Remove(client);
+                    client.Close();
+                    return;
                 }
-                client.Close();
-                Console.WriteLine($"Client {client.Client.RemoteEndPoint} disconnected");
             }
         }
 
-        static void BroadcastMessage(TcpClient senderClient, string message)
+        static void BroadcastMessage(string message)
         {
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(message);
-            lock (clients)
+            foreach (TcpClient client in clients)
             {
-                foreach (TcpClient client in clients)
-                {
-                    if (client != senderClient)
-                    {
-                        SslStream sslStream = new SslStream(client.GetStream(), false);
-                        try
-                        {
-                            sslStream.Write(buffer, 0, buffer.Length);
-                            sslStream.Flush();
-                        }
-                        catch (Exception ex)
-                        {
-                            string e = ex.Message;
-                        }
-                    }
-                }
+                NetworkStream stream = client.GetStream();
+
+                // Mã hóa tin nhắn
+                byte[] messageBytes = Encoding.UTF8.GetBytes(message);
+                byte[] encryptedBytes = messageBytes;
+
+                // Gửi tin nhắn đã mã hóa đến client
+                stream.Write(encryptedBytes, 0, encryptedBytes.Length);
             }
-            Console.WriteLine($"{senderClient.Client.RemoteEndPoint}: {message}");
+        }
+        static public byte[] AesEncrypt(byte[] message)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+                aes.Padding = PaddingMode.PKCS7;
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+                byte[] encryptedMessage = encryptor.TransformFinalBlock(message, 0, message.Length);
+                return encryptedMessage;
+            }
+        }
+
+        static public byte[] AesDecrypt(byte[] encryptedMessage)
+        {
+            using (Aes aes = Aes.Create())
+            {
+                aes.Key = key;
+                aes.IV = iv;
+                aes.Padding = PaddingMode.PKCS7;
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);
+                byte[] decryptedMessage = decryptor.TransformFinalBlock(encryptedMessage, 0, encryptedMessage.Length);
+                return decryptedMessage;
+            }
         }
     }
 }
